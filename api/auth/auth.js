@@ -129,9 +129,19 @@ router.get("/current-user", authController, async (req, res) => {
     if (!user) {
       return res.status(500).json({ success: false, status: "User not found" });
     }
-    res
-      .status(200)
-      .json({ success: true, status: "Current user fetched", user });
+    let payload = {
+      id: req.user.id,
+    };
+
+    jwt.sign(payload, secretJwtKey, { expiresIn: "1h" }, (err, token) => {
+      if (err) {
+        throw err;
+      } else {
+        res
+          .status(200)
+          .json({ success: true, status: "Current user fetched", token, user });
+      }
+    });
   } catch (error) {
     res
       .status(500)
