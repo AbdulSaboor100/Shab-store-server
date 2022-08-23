@@ -13,6 +13,11 @@ const hashPassword = async (password) => {
   return resultHash;
 };
 
+const comparePassword = async (hashPass, password) => {
+  let resultBool = bcrypt.compare(password, hashPass);
+  return resultBool;
+};
+
 router.post("/register", async (req, res) => {
   try {
     let { email, password } = req.body;
@@ -43,7 +48,40 @@ router.post("/register", async (req, res) => {
     console.log(error);
     res
       .status(500)
-      .json({ success: false, status: "Server error", error: error });
+      .json({ success: false, status: error?.response, error: error });
+  }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    let { email, password } = req.body;
+    let user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ success: false, status: "User not exits" });
+    }
+    let isPassword = await comparePassword(user?.password, password);
+    if (!isPassword) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Invalid password" });
+    }
+    let payload = {
+      id: user._id,
+    };
+    jwt.sign(payload, secretJwtKey, { expiresIn: "1h" }, (err, token) => {
+      if (err) {
+        throw err;
+      } else {
+        res
+          .status(200)
+          .json({ success: true, status: "Login successfully", token });
+      }
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, status: error?.response, error: error });
+    console.log(error);
   }
 });
 
