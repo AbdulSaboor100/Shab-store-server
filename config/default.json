@@ -1,4 +1,7 @@
 {
   "mongoURI": "mongodb+srv://saboor:saboor@cluster0.c5kmv.mongodb.net/?retryWrites=true&w=majority",
-  "jwtSecret": "mySecretKey"
+  "jwtSecret": "mySecretKey",
+  "cloudinaryName": "shab-store",
+  "cloudinaryApiKey": "791997762633332",
+  "cloudinaryApiSecret": "1xML7BJhtw6r-FWGXI2EPT7UHF4"
 }

@@ -3,6 +3,9 @@ import User from "../../modals/User/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import config from "config";
+import upload from "../../config/multer.js";
+import cloudinary from "../../config/cloudinary.js";
+import fs from "fs";
 
 const router = express();
 const secretJwtKey = config.get("jwtSecret");
@@ -18,6 +21,11 @@ const comparePassword = async (hashPass, password) => {
   return resultBool;
 };
 
+const fileUploader = async (path) => {
+  let file = await cloudinary(path, "Images");
+  return file;
+};
+
 router.post("/register", async (req, res) => {
   try {
     let { email, password } = req.body;
@@ -30,6 +38,7 @@ router.post("/register", async (req, res) => {
     user = new User({
       email,
       password: await hashPassword(password),
+      userType: "CLIENT",
     });
     await user.save();
     let payload = {
@@ -77,6 +86,31 @@ router.post("/login", async (req, res) => {
           .json({ success: true, status: "Login successfully", token });
       }
     });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, status: error?.response, error: error });
+    console.log(error);
+  }
+});
+
+router.post("/upload-images", upload.array("image"), async (req, res) => {
+  try {
+    const urls = [];
+    const files = req.files;
+    if (!files) {
+      return res.status(400).json({ success: false, status: "Please upload image" });
+    }
+    for (const file of files) {
+      const { path } = file;
+      const newPath = await fileUploader(file.path);
+      urls.push(newPath);
+      fs.unlinkSync(path);
+    }
+
+    res
+      .status(200)
+      .json({ success: true, status: "File uploaded", file: urls });
   } catch (error) {
     res
       .status(500)
