@@ -29,7 +29,7 @@ const fileUploader = async (path) => {
 
 router.post("/register", async (req, res) => {
   try {
-    let { email, password, name } = req.body;
+    let { email, password, name, image } = req.body;
     let user = await User.findOne({ email });
     if (user) {
       return res
@@ -41,6 +41,7 @@ router.post("/register", async (req, res) => {
       password: await hashPassword(password),
       userType: "CLIENT",
       name,
+      image,
     });
     await user.save();
     let payload = {
