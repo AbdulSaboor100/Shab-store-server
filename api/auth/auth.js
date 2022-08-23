@@ -6,6 +6,7 @@ import config from "config";
 import upload from "../../config/multer.js";
 import cloudinary from "../../config/cloudinary.js";
 import fs from "fs";
+import authController from "../../middleware/authController.js";
 
 const router = express();
 const secretJwtKey = config.get("jwtSecret");
@@ -28,7 +29,7 @@ const fileUploader = async (path) => {
 
 router.post("/register", async (req, res) => {
   try {
-    let { email, password } = req.body;
+    let { email, password, name } = req.body;
     let user = await User.findOne({ email });
     if (user) {
       return res
@@ -39,6 +40,7 @@ router.post("/register", async (req, res) => {
       email,
       password: await hashPassword(password),
       userType: "CLIENT",
+      name,
     });
     await user.save();
     let payload = {
@@ -99,7 +101,9 @@ router.post("/upload-images", upload.array("image"), async (req, res) => {
     const urls = [];
     const files = req.files;
     if (!files) {
-      return res.status(400).json({ success: false, status: "Please upload image" });
+      return res
+        .status(400)
+        .json({ success: false, status: "Please upload image" });
     }
     for (const file of files) {
       const { path } = file;
@@ -111,6 +115,23 @@ router.post("/upload-images", upload.array("image"), async (req, res) => {
     res
       .status(200)
       .json({ success: true, status: "File uploaded", file: urls });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, status: error?.response, error: error });
+    console.log(error);
+  }
+});
+
+router.get("/current-user", authController, async (req, res) => {
+  try {
+    let user = await User.findById({ _id: req.user.id }).select("-password");
+    if (!user) {
+      return res.status(500).json({ success: false, status: "User not found" });
+    }
+    res
+      .status(200)
+      .json({ success: true, status: "Current user fetched", user });
   } catch (error) {
     res
       .status(500)
