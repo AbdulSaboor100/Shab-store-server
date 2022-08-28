@@ -7,20 +7,16 @@ import upload from "../../config/multer.js";
 import cloudinary from "../../config/cloudinary.js";
 import fs from "fs";
 import authController from "../../middleware/authController.js";
+import {
+  hashPassword,
+  comparePassword,
+  isEmail,
+  isEmpty,
+  isLength,
+} from "../../functions/functions.js";
 
 const router = express();
 const secretJwtKey = config.get("jwtSecret");
-
-const hashPassword = async (password) => {
-  let salts = 10;
-  let resultHash = await bcrypt.hash(password, salts);
-  return resultHash;
-};
-
-const comparePassword = async (hashPass, password) => {
-  let resultBool = bcrypt.compare(password, hashPass);
-  return resultBool;
-};
 
 const fileUploader = async (path) => {
   let file = await cloudinary(path, "Images");
@@ -30,6 +26,35 @@ const fileUploader = async (path) => {
 router.post("/register", async (req, res) => {
   try {
     let { email, password, name, image } = req.body;
+    if (isEmpty(email)) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Email not found" });
+    }
+    if (isEmpty(password)) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Password not found" });
+    }
+    if (isEmpty(image)) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Image not found" });
+    }
+    if (isEmpty(name)) {
+      return res.status(400).json({ success: false, status: "Name not found" });
+    }
+    if (!isEmail(email)) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Email not valid", email });
+    }
+    if (isLength(password)) {
+      return res.status(400).json({
+        success: false,
+        status: "Password is less then 6 characters",
+      });
+    }
     let user = await User.findOne({ email });
     if (user) {
       return res
@@ -67,6 +92,27 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     let { email, password } = req.body;
+    if (isEmpty(email)) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Email not found" });
+    }
+    if (isEmpty(password)) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Password not found" });
+    }
+    if (!isEmail(email)) {
+      return res
+        .status(400)
+        .json({ success: false, status: "Email not valid", email });
+    }
+    if (isLength(password)) {
+      return res.status(400).json({
+        success: false,
+        status: "Password is less then 6 characters",
+      });
+    }
     let user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ success: false, status: "User not exits" });

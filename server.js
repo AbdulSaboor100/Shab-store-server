@@ -1,6 +1,7 @@
 import express from "express";
 import { connectDb } from "./config/db.js";
 import auth from "./api/auth/auth.js";
+import admin from "./api/admin/admin.js";
 import cors from "cors";
 
 const app = express();
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", auth);
+app.use("/api/admin", admin);
 
 app.listen(PORT, () => {
   console.log(`Server running at ${PORT}`);
